@@ -1,12 +1,29 @@
 {
   "name": "tourname",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Project for website: TournaME",
   "main": "src/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "nodemon server.js",
+    "test": "mocha tests/*.spec.js",
+    "lint": "eslint src/*"
   },
-  "type:": "module",
-  "author": "",
-  "license": "ISC"
+  "type": "module",
+  "author": "Daniel Nekludov, Almog Bar, Gal Deri, Ran Deri, Hodaya Dahan, Shir Sabag, Efrat Jamil",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "@eslint/compat": "^1.1.1",
+    "@eslint/js": "^9.7.0",
+    "@types/chai": "^4.3.16",
+    "@types/mocha": "^10.0.7",
+    "chai": "^5.1.1",
+    "eslint": "^9.7.0",
+    "eslint-plugin-react": "^7.34.4",
+    "globals": "^15.8.0",
+    "mocha": "^10.6.0",
+    "nodemon": "^3.1.4"
+  }
 }
