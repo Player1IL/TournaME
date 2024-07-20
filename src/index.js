@@ -14,8 +14,12 @@ app.get('/', (req, res) => {
 app.post('/login', (req, res) => {
     const {username, password } = req.body;
     const OK = true;
-    console.log("Got new post mesaage: ", JSON.stringify({ username, password}));
+    console.log("Got new post message: ", JSON.stringify({ username, password}));
     res.json({ massage: "Hey I got your message!", username: username, status: OK});
+})
+
+app.get('/ping', (req, res) => {
+    res.send("Pong 10");
 })
 
 app.listen(port, () => {
