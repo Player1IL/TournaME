@@ -27,6 +27,7 @@ app.post('/login', (req, res) => {
     res.json({ massage: "Hey I got your message!", username: username, status: OK});
 })
 app.post('/signup', (req, res) => {
+    res.json({status: 201})
 })
 app.get('/ping', (req, res) => {
     res.send("Pong 10");
