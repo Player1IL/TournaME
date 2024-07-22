@@ -45,7 +45,7 @@ const auth = getAuth(firebaseApp)
 app.get('/', (req, res) => {
     res.send("SERVER UP");
 })
-app.post('/login', (req, res) => {
+app.post('/signin', (req, res) => {
     const {email, password} = req.body;
     const OK = true;
 
