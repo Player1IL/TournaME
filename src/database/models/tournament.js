@@ -12,7 +12,7 @@ const userSchema = new Schema({
     comments: [{ type: Schema.Types.ObjectId, ref: 'comments' }],
     participants: [{ type: Schema.Types.ObjectId, ref: 'users' }],
     createdAt: { type: Date, default: Date.now },
-    tournament_size: {type:Number, default: 8},
+    tournament_size: { type: Number, default: 8 },
 });
 
 // Create a model from the schema

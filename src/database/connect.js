@@ -285,12 +285,19 @@ export async function delete_comment(comment_id, comment_owner, tournament_id) {
     }
     return true;
 }
-export async function add_or_remove_friend(user_id, friend_id, add) {
+export async function add_or_remove_friend(user_id, friend_email, add) {
+    let user;
+    try {
+        user = await User.findOne({ email: friend_email})
+    } catch (error) {
+        console.log('User not found')
+        return false;
+    }
     if (add === "add") {
         try {
             const updated_user = await User.findOneAndUpdate(
                 user_id,
-                {$push: {friends: friend_id}},
+                {$push: {friends: user._id}},
                 {new: true, runValidators: true}
             )
         } catch (error) {
@@ -303,7 +310,7 @@ export async function add_or_remove_friend(user_id, friend_id, add) {
         try {
             const updated_user = await User.findOneAndUpdate(
                 user_id,
-                {$pull: {friends: friend_id}},
+                {$pull: {friends: user._id}},
                 {new: true, runValidators: true}
             )
         } catch (error) {
@@ -739,10 +746,21 @@ export async function return_games() {
 }
 export async function delete_user(email) {
     try {
+        const user = await User.findOne({ email: email });
+        await clean_up(user._id);
+
         await User.findOneAndDelete({ email: email })
         return true;
     } catch (error) {
         console.error('Error deleting user:', error);
         return false;
+    }
+}
+export async function clean_up(id) {
+    try {
+        await Comment.deleteMany({ comment_owner: id });
+        await Tournament.deleteMany({owner: id});
+    } catch (error) {
+
     }
 }

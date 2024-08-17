@@ -27,7 +27,6 @@ import {
 } from "./database/connect.js"
 import mongoose from "mongoose";
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////      EXPRESS CONFIGURATION          ///////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -206,7 +205,7 @@ app.post('/user/edit/fields', async (req, res) => {
         new mongoose.Types.ObjectId(user),
         update);
     if (result) {
-        res.status(200).json({status: "Changeds made!"});
+        res.status(200).json({status: "Changes made!"});
     } else {
         res.status(400).json({status: "Failed to create!"});
     }
@@ -217,7 +216,7 @@ app.post('/user/edit/friend', async (req, res) => {
     // if add is add: Add new friend, Else remove: Remove friend
     const result = await add_or_remove_friend(
         new mongoose.Types.ObjectId(user),
-        new mongoose.Types.ObjectId(friend),
+        friend,
         add);
     if (result) {
         res.status(200).json({status: "Changes made!"});
@@ -264,7 +263,7 @@ app.post('/comment/like', async (req, res) => {
     // if Like is like: Like comment, Else Like is unlike: unlike comment
     const result = await like_or_unlike(new mongoose.Types.ObjectId(comment), new mongoose.Types.ObjectId(user), like)
     if (result) {
-        res.status(200).json({status: "Changeds made!"});
+        res.status(200).json({status: "Changes made!"});
     } else {
         res.status(400).json({status: "Failed to create!"});
     }
@@ -319,7 +318,7 @@ app.post('/tournament/delete', async (req, res) => {
     }
 })
 app.post('/tournament/get/by-game', async (req, res) => {
-    const {name} = req.body;
+    const { name } = req.body;
     console.log(name)
     const array = await get_all_tournaments(name)
     console.log(array);
