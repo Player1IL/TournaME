@@ -7,11 +7,10 @@ import {
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
 } from "firebase/auth";
-import {getFirestore, doc, setDoc, getDoc, collection, getDocs } from "firebase/firestore";
+import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
 import {
     create_new_user,
     create_new_tournament,
-    findUID,
     comment_on_tournament,
     edit_tournament,
     edit_user,
@@ -20,12 +19,9 @@ import {
     add_or_remove_friend,
     delete_comment,
     like_or_unlike,
-    get_tournaments,
-    array_walk,
     get_all_tournaments,
-    get_user_details,
+    get_user_details, get_specific_tournament,
 } from "./database/connect.js"
-import {ObjectId} from "mongodb";
 import mongoose from "mongoose";
 
 
@@ -58,101 +54,6 @@ const firebaseApp = initializeApp(firebaseConfig);
 const database = getFirestore();
 const auth = getAuth(firebaseApp)
 
-/*
-const querySnapshot = await getDocs(collection(database, "CSGO"));
-querySnapshot.forEach((document) => {
-    const data = document.data();
-    const comments = []
-
-    data.comments.forEach(async comment => {
-        const [collection_name, uid] = (comment.path).split("/");
-        console.log("collection: ", collection_name, "UID: ", uid);
-
-        const docRef = doc(database, collection_name, uid);
-        const docSnap = await getDoc(docRef);
-
-        console.log("data: ", docSnap.data());
-
-        comments.push(docSnap.data());
-    })
-
-    console.log(document.id, "=>", {
-        comments: comments,
-        description: data.description,
-        name: data.name,
-        owner: data.owner.path,
-    });
-
-});
-
-
-//run().catch(console.dir);
-
-create_new_user("Collins Jhonson", "CollinsJH@Gamil.com", "1991-01-01")
-    .then(user => console.log('New user:', user))
-    .catch(err => console.error('Failed to create user:', err));
-
-
-create_new_tournament("CSGO", "ECG 2024", "World Championship ", owner)
-    .then(user => console.log('New tournament:', user))
-    .catch(err => console.error('Failed to create tournament:', err));
-*/
-//findUID('Daniel Nekludov');
-//comment_on_tournament(new mongoose.Types.ObjectId('66bf2e55af3e980d92a243ac'), new mongoose.Types.ObjectId('66bf2fb0af3e980d92a243b9'), 'Fuck yeah, lets go!');
-//reply_to_comment(new mongoose.Types.ObjectId('66bf62ffd03612f2043cf729'), new mongoose.Types.ObjectId('66bf3087af3e980d92a243be'), "WOWIE LOOK IT WORKS");
-//delete_tournament(new mongoose.Types.ObjectId('66bf68b3af3e980d92a24447'))
-/*
-edit_tournament(new mongoose.Types.ObjectId('66bf2e55af3e980d92a243ac'),
-    {
-        status: "CLOSED",
-        tournament_description: "World Cup CSGO ECG 2025 first bracket",
-        tournament_name: "ECG World Cup 2025"
-    })
-*/
-/*
-add_or_remove_friend(
-    new mongoose.Types.ObjectId('66bf2fb0af3e980d92a243b9'),
-    new mongoose.Types.ObjectId('66bf3087af3e980d92a243be'),
-    false);
-*/
-/*
-delete_comment(
-    new mongoose.Types.ObjectId('66bf62ffd03612f2043cf729'),
-    new mongoose.Types.ObjectId('66bf2fb0af3e980d92a243b9'),
-    new mongoose.Types.ObjectId('66bf2e55af3e980d92a243ac'),
-);
-*/
-/*
-like_or_unlike(
-    new mongoose.Types.ObjectId('66bf320eaf3e980d92a243cf'),
-    new mongoose.Types.ObjectId('66bf4c3631ebce8cc85c9233'),
-    false
-);
-*/
-/*
-let array = await get_tournaments(
-    '66bf4cb6af3e980d92a24416');
-//await array_walk(array)
-
-
-async function processArray(array) {
-    const results = await Promise.all(array.map(async item => {
-        console.log(item.owner);
-        item.owner = await get_document_by_id(item.owner);
-        return item;
-    }));
-
-    return results;
-}
-const updatedArray = await processArray(array);
-await console.log('New Array:', updatedArray);
-*/
-
-//const result = await get_all_tournaments()
-//const result = await get_user_details('Rockknife@gmail.com')
-//const result = await get_all_tournaments("CSGO");
-
-//console.log('Result: ', result);
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////      ENDPOINTS       //////////////////////////////////////////////////////////
@@ -163,7 +64,6 @@ app.get('/', (req, res) => {
 })
 app.post('/signin', (req, res) => {
     const {email, password} = req.body;
-    const OK = true;
 
     signInWithEmailAndPassword(auth, email, password)
         .then(async (credential) => {
@@ -183,7 +83,8 @@ app.post('/signin', (req, res) => {
                 console.log("Account logged");
 				const userDetails = await get_user_details(email);
 				console.log("Details: ", userDetails);
-                res.status(200).json(JSON.stringify(userDetails));
+                //res.status(200).json(JSON.stringify(userDetails));
+                res.status(200).json(userDetails);
             }
         }).catch((e) => {
         res.status(400).json({error: "Incorrect username or password" + e.message});
@@ -227,17 +128,148 @@ app.get('/about', async (req, res) => {
         res.status(500).send('Error fetching the webpage content');
     }
 });
-app.post('/getTournament', async (req, res) => {
+app.post('/user/get', async (req, res) => {
+    const { email } = req.body;
+    console.log(email)
+    const array = await get_user_details(email)
+    console.log(array);
+    res.status(200).json(array);
+})
+app.post('/user/edit/fields', async (req, res) => {
+    const { user, update } = req.body;
+    console.log(user, update);
+    /* Example of update structure ->
+    {
+        full_name: "Same",
+        date_of_birth: "1991-01-01",
+    }
+    */
+    const result = await edit_user(
+        new mongoose.Types.ObjectId(user),
+        update);
+    if (result) {
+        res.status(200).json({status: "Changeds made!"});
+    } else {
+        res.status(400).json({status: "Failed to create!"});
+    }
+})
+app.post('/user/edit/friend', async (req, res) => {
+    const { user, friend, add } = req.body;
+    console.log(user, friend, add);
+    // if add is add: Add new friend, Else remove: Remove friend
+    const result = await add_or_remove_friend(
+        new mongoose.Types.ObjectId(user),
+        new mongoose.Types.ObjectId(friend),
+        add);
+    if (result) {
+        res.status(200).json({status: "Changes made!"});
+    } else {
+        res.status(400).json({status: "Failed to change!"});
+    }
+})
+app.post('/comment/add', async (req, res) => {
+    const { tournament, user, text } = req.body;
+    console.log(tournament, user, text);
+    const result = await comment_on_tournament(new mongoose.Types.ObjectId(tournament), new mongoose.Types.ObjectId(user), text);
+    if (result) {
+        res.status(200).json({status: "Comment created!"});
+    } else {
+        res.status(400).json({status: "Failed to create!"});
+    }
+})
+app.post('/comment/reply', async (req, res) => {
+    const { comment, owner, text } = req.body;
+    console.log(comment, owner, text);
+    const result = await reply_to_comment(new mongoose.Types.ObjectId(comment), new mongoose.Types.ObjectId(owner), text);
+    if (result) {
+        res.status(200).json({status: "Replied successfully!"});
+    } else {
+        res.status(400).json({status: "Failed to reply!"});
+    }
+})
+app.post('/comment/delete', async (req, res) => {
+    const { comment, owner, tournament } = req.body;
+    console.log(comment, owner, tournament);
+    const result = await delete_comment(
+        new mongoose.Types.ObjectId(comment),
+        new mongoose.Types.ObjectId(owner),
+        new mongoose.Types.ObjectId(tournament));
+    if (result) {
+        res.status(200).json({status: "Replied successfully!"});
+    } else {
+        res.status(400).json({status: "Failed to reply!"});
+    }
+})
+app.post('/comment/like', async (req, res) => {
+    const { comment, user, like } = req.body;
+    console.log(comment, user, like);
+    // if Like is like: Like comment, Else Like is unlike: unlike comment
+    const result = await like_or_unlike(new mongoose.Types.ObjectId(comment), new mongoose.Types.ObjectId(user), like)
+    if (result) {
+        res.status(200).json({status: "Changeds made!"});
+    } else {
+        res.status(400).json({status: "Failed to create!"});
+    }
+})
+app.post('/tournament/new', async (req, res) => {
+    const { game, tournament_name, tournament_description, owner } = req.body;
+    console.log(game, tournament_name, tournament_description, owner);
+    const result = await create_new_tournament(
+        new mongoose.Types.ObjectId(game),
+        tournament_name,
+        tournament_description,
+        new mongoose.Types.ObjectId(owner)
+    );
+    if (result) {
+        res.status(200).json({status: "Tournament created!"});
+    } else {
+        res.status(400).json({status: "Failed to create!"});
+    }
+})
+app.post('/tournament/edit', async (req, res) => {
+    const { tournament, changes} = req.body;
+    console.log(tournament, changes);
+    /* Example of changes structure ->
+    {
+        status: "CLOSED",
+        tournament_description: "World Cup CSGO ECG 2025 first bracket",
+        tournament_name: "ECG World Cup 2025"
+    }
+    */
+    const result = await edit_tournament(
+        new mongoose.Types.ObjectId(tournament),
+        changes
+    );
+    if (result) {
+        res.status(200).json({status: "Changes made!"});
+    } else {
+        res.status(400).json({status: "Failed to change!"});
+    }
+})
+app.post('/tournament/delete', async (req, res) => {
+    const { tournament, owner} = req.body;
+    console.log(tournament, owner);
+    const result = await delete_tournament(
+        new mongoose.Types.ObjectId(tournament),
+        new mongoose.Types.ObjectId(owner),
+    );
+    if (result) {
+        res.status(200).json({status: "Tournament deleted!"});
+    } else {
+        res.status(400).json({status: "Failed to delete!"});
+    }
+})
+app.post('/tournament/get/by-game', async (req, res) => {
     const { name } = req.body;
     console.log(name)
     const array = await get_all_tournaments(name)
     console.log(array);
     res.status(200).json(array);
 })
-app.post('/getUser', async (req, res) => {
-    const { email } = req.body;
-    console.log(email)
-    const array = await get_user_details(email)
+app.post('/tournament/get/by-id', async (req, res) => {
+    const { id } = req.body;
+    console.log(id)
+    const array = await get_specific_tournament(new mongoose.Types.ObjectId(id))
     console.log(array);
     res.status(200).json(array);
 })

@@ -51,13 +51,14 @@ export async function edit_user(user_id, updated_fields) {
         );
         if (updated_tournament) {
             console.log('User updated:', updated_tournament);
-            //return updated_tournament;
+            return true;
         } else {
             console.log('User not found');
-            //return null;
+            return false;
         }
     } catch (error) {
         console.error('Error updating user:', error);
+        return false;
     }
 }
 export async function create_new_tournament(game, tournament_name, tournament_description, owner) {
@@ -70,14 +71,25 @@ export async function create_new_tournament(game, tournament_name, tournament_de
         comments: [],
         participants: []
     });
+    let savedTournament;
     try {
-        const savedTournament = await newTournament.save();
-        console.log('User created:', savedTournament);
-        //return savedTournament;
+        savedTournament = await newTournament.save();
+        console.log('Tournament created:', savedTournament);
     } catch (err) {
-        console.error('Error creating user:', err);
-        //throw err;
+        console.error('Error creating tournament:', err);
+        return false;
     }
+    try {
+        const updated_user = await User.findOneAndUpdate(
+            owner,
+            { $push: { tournaments: savedTournament._id } },
+            { new: true, runValidators: true }
+        )
+    } catch (error) {
+        console.error('Error creating tournament:', error);
+        return false;
+    }
+    return true;
 }
 export async function edit_tournament(tournament_id, updated_fields) {
     try {
@@ -88,13 +100,14 @@ export async function edit_tournament(tournament_id, updated_fields) {
         );
         if (updated_tournament) {
             console.log('Tournament updated:', updated_tournament);
-            //return updated_tournament;
+            return true;
         } else {
             console.log('Tournament not found');
-            //return null;
+            return false;
         }
     } catch (error) {
         console.error('Error updating tournament:', error);
+        return false;
     }
 }
 export async function delete_tournament(tournament_id, owner) {
@@ -103,13 +116,13 @@ export async function delete_tournament(tournament_id, owner) {
 
         if (deletedTournament) {
             console.log('Tournament deleted:', deletedTournament);
-            //return deletedTournament;
         } else {
             console.log('Tournament not found');
-            //return null;
+            return false;
         }
     } catch (error) {
         console.error('Error deleting tournament:', error);
+        return false;
     }
     try {
         const updated_user = await User.findOneAndUpdate(
@@ -119,7 +132,9 @@ export async function delete_tournament(tournament_id, owner) {
         )
     } catch (error) {
         console.error('Error deleting tournament from user:', error);
+        return false;
     }
+    return true;
 }
 export async function findUID(fullname) {
     try {
@@ -147,9 +162,10 @@ export async function comment_on_tournament(tournament_id, comment_owner, commen
     let savedComment
     try {
         savedComment = await newComment.save();
-        console.log('User created:', savedComment);
+        console.log('Comment created:', savedComment);
     } catch (error) {
         console.error('Error creating user:', error);
+        return false;
     }
     try {
         const updated_tournament = await Tournament.findOneAndUpdate(
@@ -161,6 +177,7 @@ export async function comment_on_tournament(tournament_id, comment_owner, commen
             console.log('Tournament updated with new comment:', updated_tournament);
         } else {
             console.log('Tournament not found');
+            return false;
         }
     } catch (error) {
         console.error('Error updating tournament:', error);
@@ -176,11 +193,12 @@ export async function comment_on_tournament(tournament_id, comment_owner, commen
             //return updated_user;
         } else {
             console.log('User not found');
-            //return null;
+            return false;
         }
     } catch (error) {
         console.error('Error updating user:', error);
     }
+    return true;
 }
 export async function reply_to_comment(comment_id, comment_owner, comment_text) {
     const newComment = new Comment({
@@ -195,6 +213,7 @@ export async function reply_to_comment(comment_id, comment_owner, comment_text) 
         console.log('Comment created:', savedComment);
     } catch (error) {
         console.error('Error creating comment:', error);
+        return false;
     }
     try {
         const update_comment = await Comment.findOneAndUpdate(
@@ -206,6 +225,7 @@ export async function reply_to_comment(comment_id, comment_owner, comment_text) 
             console.log('Comment updated with new reply:', update_comment);
         } else {
             console.log('Comment not found');
+            return false;
         }
     } catch (error) {
         console.error('Error updating comment:', error);
@@ -220,10 +240,12 @@ export async function reply_to_comment(comment_id, comment_owner, comment_text) 
             console.log('User updated with new comment:', updated_user);
         } else {
             console.log('User not found');
+            return false;
         }
     } catch (error) {
         console.error('Error updating user:', error);
     }
+    return true;
 }
 export async function delete_comment(comment_id, comment_owner, tournament_id) {
     try {
@@ -233,9 +255,11 @@ export async function delete_comment(comment_id, comment_owner, tournament_id) {
             console.log('Comment deleted:', deleted_comment);
         } else {
             console.log('Comment not found');
+            return false;
         }
     } catch (error) {
         console.error('Error deleting comment:', error);
+        return false;
     }
     try {
         const updated_user = await User.findOneAndUpdate(
@@ -245,6 +269,7 @@ export async function delete_comment(comment_id, comment_owner, tournament_id) {
         )
     } catch (error) {
         console.log('User not found')
+        return false;
     }
     try {
         const updated_tournament = await Tournament.findOneAndUpdate(
@@ -254,10 +279,12 @@ export async function delete_comment(comment_id, comment_owner, tournament_id) {
         )
     } catch (error) {
         console.log('FAILED')
+        return false;
     }
+    return true;
 }
-export async function add_or_remove_friend(user_id, friend_id, remove) {
-    if (!remove) {
+export async function add_or_remove_friend(user_id, friend_id, add) {
+    if (add === "add") {
         try {
             const updated_user = await User.findOneAndUpdate(
                 user_id,
@@ -266,9 +293,11 @@ export async function add_or_remove_friend(user_id, friend_id, remove) {
             )
         } catch (error) {
             console.log('User not found')
+            return false;
         }
+        return true;
     }
-    else {
+    else if (add === "remove") {
         try {
             const updated_user = await User.findOneAndUpdate(
                 user_id,
@@ -277,11 +306,14 @@ export async function add_or_remove_friend(user_id, friend_id, remove) {
             )
         } catch (error) {
             console.log('User not found')
+            return false;
         }
+        return true;
     }
+    return false;
 }
 export async function like_or_unlike(comment_id, user_id, like) {
-    if (like) {
+    if (like === "like") {
         try {
             const updated_comment = await Comment.findOneAndUpdate(
                 comment_id,
@@ -290,6 +322,7 @@ export async function like_or_unlike(comment_id, user_id, like) {
             )
         } catch (error) {
             console.error('Comment not found', error)
+            return false;
         }
         try {
             const updated_user = await User.findOneAndUpdate(
@@ -299,9 +332,10 @@ export async function like_or_unlike(comment_id, user_id, like) {
             )
         } catch (error) {
             console.error('User not found', error)
+            return false;
         }
     }
-    else {
+    else if (like === "unlike"){
         try {
             const updated_comment = await Comment.findOneAndUpdate(
                 comment_id,
@@ -310,6 +344,7 @@ export async function like_or_unlike(comment_id, user_id, like) {
             )
         } catch (error) {
             console.error('Comment not found', error)
+            return false;
         }
         try {
             const updated_user = await User.findOneAndUpdate(
@@ -319,48 +354,10 @@ export async function like_or_unlike(comment_id, user_id, like) {
             )
         } catch (error) {
             console.error('User not found', error)
+            return false;
         }
     }
-}
-export async function get_tournaments(game_id) {
-    try {
-        const games = await Tournament.find(
-            { game: game_id }
-        );
-        if (games) {
-            console.log('Tournaments found: ', games);
-            return games;
-        } else {
-            console.log('No tournaments found');
-        }
-    } catch (error) {
-        console.error('Tournament not found');
-    }
-}
-export async function array_walk(array) {
-    const userModel = mongoose.model('User', User.schema);
-
-    for (const obj of array) {
-        for (const key of Object.keys(obj)) {
-            const value = obj[key];
-            console.log(`Checking key: ${key}, Value:`, value);
-
-            // Check if the value is an ObjectId instance
-            if (value instanceof mongoose.Types.ObjectId) {
-                if (key === 'owner') {
-                    console.log('Value before:', value);
-                    try {
-                        obj[key] = await get_document_by_id(value);
-                        console.log('Value after:', obj[key]);
-                    } catch (error) {
-                        console.error('Error fetching document:', error);
-                    }
-                }
-            } else {
-                console.log(`Value is not an ObjectId:`, value);
-            }
-        }
-    }
+    return true;
 }
 export async function get_all_tournaments(name) {
     const agg = [
@@ -504,6 +501,148 @@ export async function get_all_tournaments(name) {
     await client.close();
     return result
 }
+export async function get_specific_tournament(id) {
+    const agg = [
+        {
+            '$match': {
+                '_id': id
+            }
+        },
+        {
+            '$lookup': {
+                'from': 'comments',
+                'localField': 'comments',
+                'foreignField': '_id',
+                'as': 'commentsDetails'
+            }
+        }, {
+            '$unwind': '$commentsDetails'
+        }, {
+            '$lookup': {
+                'from': 'users',
+                'localField': 'commentsDetails.comment_owner',
+                'foreignField': '_id',
+                'as': 'commentsDetails.ownerDetails',
+                'pipeline': [
+                    {
+                        '$project': {
+                            'full_name': 1
+                        }
+                    }
+                ]
+            }
+        }, {
+            '$unwind': '$commentsDetails.ownerDetails'
+        }, {
+            '$set': {
+                'commentsDetails.comment_owner_full_name': '$commentsDetails.ownerDetails.full_name'
+            }
+        }, {
+            '$lookup': {
+                'from': 'comments',
+                'localField': 'commentsDetails.replies',
+                'foreignField': '_id',
+                'as': 'commentsDetails.repliesDetails'
+            }
+        }, {
+            '$unwind': '$commentsDetails.repliesDetails'
+        }, {
+            '$lookup': {
+                'from': 'users',
+                'localField': 'commentsDetails.repliesDetails.comment_owner',
+                'foreignField': '_id',
+                'as': 'commentsDetails.repliesDetails.ownerDetails',
+                'pipeline': [
+                    {
+                        '$project': {
+                            'full_name': 1
+                        }
+                    }
+                ]
+            }
+        }, {
+            '$unwind': '$commentsDetails.repliesDetails.ownerDetails'
+        }, {
+            '$set': {
+                'commentsDetails.repliesDetails.comment_owner_full_name': '$commentsDetails.repliesDetails.ownerDetails.full_name'
+            }
+        }, {
+            '$lookup': {
+                'from': 'users',
+                'localField': 'owner',
+                'foreignField': '_id',
+                'as': 'ownerDetails',
+                'pipeline': [
+                    {
+                        '$project': {
+                            'full_name': 1
+                        }
+                    }
+                ]
+            }
+        }, {
+            '$unwind': '$ownerDetails'
+        }, {
+            '$set': {
+                'owner_full_name': '$ownerDetails.full_name'
+            }
+        }, {
+            '$lookup': {
+                'from': 'games',
+                'localField': 'game',
+                'foreignField': '_id',
+                'as': 'gameDetails',
+                'pipeline': [
+                    {
+                        '$project': {
+                            'game_name': 1
+                        }
+                    }
+                ]
+            }
+        }, {
+            '$unwind': '$gameDetails'
+        }, {
+            '$set': {
+                'game_name': '$gameDetails.game_name'
+            }
+        }, {
+            '$lookup': {
+                'from': 'users',
+                'localField': 'participants',
+                'foreignField': '_id',
+                'as': 'participantDetails',
+                'pipeline': [
+                    {
+                        '$project': {
+                            'full_name': 1
+                        }
+                    }
+                ]
+            }
+        }, {
+            '$set': {
+                'participantDetails': {
+                    '$map': {
+                        'input': '$participantDetails',
+                        'as': 'participant',
+                        'in': {
+                            '_id': '$$participant._id',
+                            'full_name': '$$participant.full_name'
+                        }
+                    }
+                }
+            }
+        }
+    ];
+    const client = await MongoClient.connect(uri);
+    const coll = client.db('MAIN').collection('tournaments');
+
+    const cursor = coll.aggregate(agg);
+    const result = await cursor.toArray();
+    await client.close();
+    return result
+}
 export async function get_user_details(email) {
     const agg = [
         {
@@ -539,6 +678,52 @@ export async function get_user_details(email) {
 
     const cursor = coll.aggregate(agg);
     const result = await cursor.toArray();
+    await client.close();
+    return result
+}
+export async function user_cleanup_missing_comments() {
+    const agg = [
+        {
+            '$lookup': {
+                'from': 'comments',
+                'localField': 'comments',
+                'foreignField': '_id',
+                'as': 'comment_details'
+            }
+        }, {
+            '$project': {
+                'missing_comments': {
+                    '$filter': {
+                        'input': '$comments',
+                        'as': 'commentId',
+                        'cond': {
+                            '$not': {
+                                '$in': [
+                                    '$$commentId', '$comment_details._id'
+                                ]
+                            }
+                        }
+                    }
+                },
+                'full_name': 1,
+                'email': 1
+            }
+        }, {
+            '$match': {
+                'missing_comments': {
+                    '$ne': []
+                }
+            }
+        }
+    ];
+    const client = await MongoClient.connect(uri);
+    const coll = client.db('MAIN').collection('users');
+
+    const cursor = coll.aggregate(agg);
+    const result = await cursor.toArray();
+
+    console.log(result)
+
     await client.close();
     return result
 }
