@@ -6,8 +6,9 @@ import {
     getAuth,
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
+    updatePassword,
 } from "firebase/auth";
-import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
+import {getFirestore, doc, setDoc, getDoc} from "firebase/firestore";
 import {
     create_new_user,
     create_new_tournament,
@@ -81,8 +82,8 @@ app.post('/signin', (req, res) => {
             */
             if (docSnap.exists()) {
                 console.log("Account logged");
-				const userDetails = await get_user_details(email);
-				console.log("Details: ", userDetails);
+                const userDetails = await get_user_details(email);
+                console.log("Details: ", userDetails);
                 //res.status(200).json(JSON.stringify(userDetails));
                 res.status(200).json(userDetails);
             }
@@ -115,6 +116,29 @@ app.post('/signup', async (req, res) => {
     })
 
 })
+app.post('/user/edit/password', async (req, res) => {
+    const {email, password, new_password} = req.body;
+    console.log("Got credentials: " + email + " " + password, + " " + new_password);
+
+    const auth = getAuth();
+
+    signInWithEmailAndPassword(auth, email, password)
+        .then((userCredential) => {
+            const user = userCredential.user;
+            updatePassword(user, new_password).then(() => {
+                res.status(200).json({message: "Password changed"});
+            }).catch((error) => {
+                console.error("Error updating password:", error);
+                res.status(400).json({message: "Password change failed"});
+            })
+        })
+        .then(() => {})
+        .catch((error) => {
+            console.error("Error updating password:", error);
+            res.status(400).json({message: "Password change failed"});
+        });
+
+})
 app.get('/ping', (req, res) => {
     res.send("Pong 10");
 })
@@ -129,14 +153,14 @@ app.get('/about', async (req, res) => {
     }
 });
 app.post('/user/get', async (req, res) => {
-    const { email } = req.body;
+    const {email} = req.body;
     console.log(email)
     const array = await get_user_details(email)
     console.log(array);
     res.status(200).json(array);
 })
 app.post('/user/edit/fields', async (req, res) => {
-    const { user, update } = req.body;
+    const {user, update} = req.body;
     console.log(user, update);
     /* Example of update structure ->
     {
@@ -154,7 +178,7 @@ app.post('/user/edit/fields', async (req, res) => {
     }
 })
 app.post('/user/edit/friend', async (req, res) => {
-    const { user, friend, add } = req.body;
+    const {user, friend, add} = req.body;
     console.log(user, friend, add);
     // if add is add: Add new friend, Else remove: Remove friend
     const result = await add_or_remove_friend(
@@ -168,7 +192,7 @@ app.post('/user/edit/friend', async (req, res) => {
     }
 })
 app.post('/comment/add', async (req, res) => {
-    const { tournament, user, text } = req.body;
+    const {tournament, user, text} = req.body;
     console.log(tournament, user, text);
     const result = await comment_on_tournament(new mongoose.Types.ObjectId(tournament), new mongoose.Types.ObjectId(user), text);
     if (result) {
@@ -178,7 +202,7 @@ app.post('/comment/add', async (req, res) => {
     }
 })
 app.post('/comment/reply', async (req, res) => {
-    const { comment, owner, text } = req.body;
+    const {comment, owner, text} = req.body;
     console.log(comment, owner, text);
     const result = await reply_to_comment(new mongoose.Types.ObjectId(comment), new mongoose.Types.ObjectId(owner), text);
     if (result) {
@@ -188,7 +212,7 @@ app.post('/comment/reply', async (req, res) => {
     }
 })
 app.post('/comment/delete', async (req, res) => {
-    const { comment, owner, tournament } = req.body;
+    const {comment, owner, tournament} = req.body;
     console.log(comment, owner, tournament);
     const result = await delete_comment(
         new mongoose.Types.ObjectId(comment),
@@ -201,7 +225,7 @@ app.post('/comment/delete', async (req, res) => {
     }
 })
 app.post('/comment/like', async (req, res) => {
-    const { comment, user, like } = req.body;
+    const {comment, user, like} = req.body;
     console.log(comment, user, like);
     // if Like is like: Like comment, Else Like is unlike: unlike comment
     const result = await like_or_unlike(new mongoose.Types.ObjectId(comment), new mongoose.Types.ObjectId(user), like)
@@ -212,7 +236,7 @@ app.post('/comment/like', async (req, res) => {
     }
 })
 app.post('/tournament/new', async (req, res) => {
-    const { game, tournament_name, tournament_description, owner } = req.body;
+    const {game, tournament_name, tournament_description, owner} = req.body;
     console.log(game, tournament_name, tournament_description, owner);
     const result = await create_new_tournament(
         new mongoose.Types.ObjectId(game),
@@ -227,7 +251,7 @@ app.post('/tournament/new', async (req, res) => {
     }
 })
 app.post('/tournament/edit', async (req, res) => {
-    const { tournament, changes} = req.body;
+    const {tournament, changes} = req.body;
     console.log(tournament, changes);
     /* Example of changes structure ->
     {
@@ -247,7 +271,7 @@ app.post('/tournament/edit', async (req, res) => {
     }
 })
 app.post('/tournament/delete', async (req, res) => {
-    const { tournament, owner} = req.body;
+    const {tournament, owner} = req.body;
     console.log(tournament, owner);
     const result = await delete_tournament(
         new mongoose.Types.ObjectId(tournament),
@@ -260,14 +284,14 @@ app.post('/tournament/delete', async (req, res) => {
     }
 })
 app.post('/tournament/get/by-game', async (req, res) => {
-    const { name } = req.body;
+    const {name} = req.body;
     console.log(name)
     const array = await get_all_tournaments(name)
     console.log(array);
     res.status(200).json(array);
 })
 app.post('/tournament/get/by-id', async (req, res) => {
-    const { id } = req.body;
+    const {id} = req.body;
     console.log(id)
     const array = await get_specific_tournament(new mongoose.Types.ObjectId(id))
     console.log(array);
