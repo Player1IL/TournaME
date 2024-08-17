@@ -12,9 +12,7 @@ First, run the server:
 
 ```bash
 npm install
-npm run dev
-# or
-pnpm run start
+npm run start
 ```
 
 Open [http://localhost:3000](http://localhost:3000) or the link that will be provided if 3000 isn't available with your browser to see the result.
