@@ -379,8 +379,7 @@ export async function get_all_tournaments(name) {
             }
         }, {
             '$unwind': '$game_details'
-        },
-        {
+        },         {
             '$match': {
                 'game_details.game_name': name
             }
@@ -409,56 +408,42 @@ export async function get_all_tournaments(name) {
                 'as': 'comments_details'
             }
         }, {
-            '$unwind': '$comments_details'
-        }, {
             '$lookup': {
                 'from': 'comments',
                 'localField': 'comments_details.replies',
                 'foreignField': '_id',
-                'as': 'comments_details.replies_details'
+                'as': 'comments_replies_details'
             }
         }, {
-            '$group': {
-                '_id': '$_id',
-                'game_details': {
-                    '$first': '$game_details'
-                },
+            '$project': {
+                'tournament_size': 1,
+                'tournament_description': 1,
+                'createdAt': 1,
+                'tournament_name': 1,
+                'status': 1,
+                'game_details': 1,
                 'owner_details': {
-                    '$first': {
-                        'full_name': '$owner_details.full_name',
-                        '_id': '$owner_details._id'
-                    }
+                    '_id': 1,
+                    'full_name': 1
                 },
-                'participant_details': {
-                    '$first': '$participant_details'
-                },
+                'participant_details': 1,
                 'comments_details': {
-                    '$push': {
-                        '$mergeObjects': [
-                            '$comments_details', {
-                                'replies': '$comments_details.replies_details'
-                            }
-                        ]
+                    '$map': {
+                        'input': '$comments_details',
+                        'as': 'comment',
+                        'in': {
+                            '$mergeObjects': [
+                                '$$comment', {
+                                    'replies_details': '$comments_replies_details'
+                                }
+                            ]
+                        }
                     }
-                },
-                'tournament_description': {
-                    '$first': '$tournament_description'
-                },
-                'createdAt': {
-                    '$first': '$createdAt'
-                },
-                'tournament_name': {
-                    '$first': '$tournament_name'
-                },
-                '__v': {
-                    '$first': '$__v'
-                },
-                'status': {
-                    '$first': '$status'
                 }
             }
         }
     ];
+
 
     const client = await MongoClient.connect(uri);
     const coll = client.db('MAIN').collection('tournaments');
