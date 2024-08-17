@@ -11,6 +11,7 @@ const userSchema = new Schema({
     owner: { type: Schema.Types.ObjectId, ref: 'users' },
     comments: [{ type: Schema.Types.ObjectId, ref: 'comments' }],
     participants: [{ type: Schema.Types.ObjectId, ref: 'users' }],
+    createdAt: { type: Date, default: Date.now },
 });
 
 // Create a model from the schema

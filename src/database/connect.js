@@ -736,3 +736,12 @@ export async function return_games() {
         return false;
     }
 }
+export async function delete_user(email) {
+    try {
+        await User.findOneAndDelete({ email: email })
+        return true;
+    } catch (error) {
+        console.error('Error deleting user:', error);
+        return false;
+    }
+}

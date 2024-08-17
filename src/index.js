@@ -7,8 +7,9 @@ import {
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
     updatePassword,
+    deleteUser,
 } from "firebase/auth";
-import {getFirestore, doc, setDoc, getDoc} from "firebase/firestore";
+import {getFirestore, doc, setDoc, getDoc, deleteDoc} from "firebase/firestore";
 import {
     create_new_user,
     create_new_tournament,
@@ -22,7 +23,7 @@ import {
     like_or_unlike,
     get_all_tournaments,
     get_user_details, get_specific_tournament,
-    return_games,
+    return_games, delete_user,
 } from "./database/connect.js"
 import mongoose from "mongoose";
 
@@ -138,6 +139,39 @@ app.post('/user/edit/password', async (req, res) => {
             res.status(400).json({message: "Password change failed"});
         });
 
+})
+app.post('/user/remove', async (req, res) => {
+    const { email, password } = req.body;
+    console.log("Got credentials: " + email + " " + password);
+
+    const auth = getAuth();
+
+    signInWithEmailAndPassword(auth, email, password)
+        .then(async (userCredential) => {
+            const user = userCredential.user;
+
+            const userDocRef = doc(database, "users", user.uid);
+            await deleteDoc(userDocRef);
+
+            deleteUser(user).then(async () => {
+                const result = await delete_user(email)
+                if (result) {
+                    console.log("User with email: " + email + " deleted!");
+                    res.status(200).json({message: "User delete"});
+                } else {
+                    console.log("Failed to delete");
+                    res.status(400).json({message: "Failed to delete"});
+                }
+            }).catch((error) => {
+                console.error("Error deleting:", error);
+                res.status(400).json({message: "Failed to delete"});
+            })
+        })
+        .then(() => {})
+        .catch((error) => {
+            console.error("Error deleting:", error);
+            res.status(400).json({message: "Failed to delete"});
+        });
 })
 app.get('/ping', (req, res) => {
     res.send("Pong 10");
