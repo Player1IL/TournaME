@@ -372,136 +372,94 @@ export async function get_all_tournaments(name) {
     const agg = [
         {
             '$lookup': {
-                'from': 'comments',
-                'localField': 'comments',
+                'from': 'games',
+                'localField': 'game',
                 'foreignField': '_id',
-                'as': 'commentsDetails'
+                'as': 'game_details'
             }
         }, {
-            '$unwind': '$commentsDetails'
-        }, {
-            '$lookup': {
-                'from': 'users',
-                'localField': 'commentsDetails.comment_owner',
-                'foreignField': '_id',
-                'as': 'commentsDetails.ownerDetails',
-                'pipeline': [
-                    {
-                        '$project': {
-                            'full_name': 1
-                        }
-                    }
-                ]
+            '$unwind': '$game_details'
+        },
+        {
+            '$match': {
+                'game_details.game_name': name
             }
-        }, {
-            '$unwind': '$commentsDetails.ownerDetails'
-        }, {
-            '$set': {
-                'commentsDetails.comment_owner_full_name': '$commentsDetails.ownerDetails.full_name'
-            }
-        }, {
-            '$lookup': {
-                'from': 'comments',
-                'localField': 'commentsDetails.replies',
-                'foreignField': '_id',
-                'as': 'commentsDetails.repliesDetails'
-            }
-        }, {
-            '$unwind': '$commentsDetails.repliesDetails'
-        }, {
-            '$lookup': {
-                'from': 'users',
-                'localField': 'commentsDetails.repliesDetails.comment_owner',
-                'foreignField': '_id',
-                'as': 'commentsDetails.repliesDetails.ownerDetails',
-                'pipeline': [
-                    {
-                        '$project': {
-                            'full_name': 1
-                        }
-                    }
-                ]
-            }
-        }, {
-            '$unwind': '$commentsDetails.repliesDetails.ownerDetails'
-        }, {
-            '$set': {
-                'commentsDetails.repliesDetails.comment_owner_full_name': '$commentsDetails.repliesDetails.ownerDetails.full_name'
-            }
-        }, {
+        },
+        {
             '$lookup': {
                 'from': 'users',
                 'localField': 'owner',
                 'foreignField': '_id',
-                'as': 'ownerDetails',
-                'pipeline': [
-                    {
-                        '$project': {
-                            'full_name': 1
-                        }
-                    }
-                ]
+                'as': 'owner_details'
             }
         }, {
-            '$unwind': '$ownerDetails'
-        }, {
-            '$set': {
-                'owner_full_name': '$ownerDetails.full_name'
-            }
-        }, {
-            '$lookup': {
-                'from': 'games',
-                'localField': 'game',
-                'foreignField': '_id',
-                'as': 'gameDetails',
-                'pipeline': [
-                    {
-                        '$project': {
-                            'game_name': 1
-                        }
-                    }
-                ]
-            }
-        }, {
-            '$unwind': '$gameDetails'
-        }, {
-            '$set': {
-                'game_name': '$gameDetails.game_name'
-            }
+            '$unwind': '$owner_details'
         }, {
             '$lookup': {
                 'from': 'users',
                 'localField': 'participants',
                 'foreignField': '_id',
-                'as': 'participantDetails',
-                'pipeline': [
-                    {
-                        '$project': {
-                            'full_name': 1
-                        }
-                    }
-                ]
+                'as': 'participant_details'
             }
         }, {
-            '$set': {
-                'participantDetails': {
-                    '$map': {
-                        'input': '$participantDetails',
-                        'as': 'participant',
-                        'in': {
-                            '_id': '$$participant._id',
-                            'full_name': '$$participant.full_name'
-                        }
+            '$lookup': {
+                'from': 'comments',
+                'localField': 'comments',
+                'foreignField': '_id',
+                'as': 'comments_details'
+            }
+        }, {
+            '$unwind': '$comments_details'
+        }, {
+            '$lookup': {
+                'from': 'comments',
+                'localField': 'comments_details.replies',
+                'foreignField': '_id',
+                'as': 'comments_details.replies_details'
+            }
+        }, {
+            '$group': {
+                '_id': '$_id',
+                'game_details': {
+                    '$first': '$game_details'
+                },
+                'owner_details': {
+                    '$first': {
+                        'full_name': '$owner_details.full_name',
+                        '_id': '$owner_details._id'
                     }
+                },
+                'participant_details': {
+                    '$first': '$participant_details'
+                },
+                'comments_details': {
+                    '$push': {
+                        '$mergeObjects': [
+                            '$comments_details', {
+                                'replies': '$comments_details.replies_details'
+                            }
+                        ]
+                    }
+                },
+                'tournament_description': {
+                    '$first': '$tournament_description'
+                },
+                'createdAt': {
+                    '$first': '$createdAt'
+                },
+                'tournament_name': {
+                    '$first': '$tournament_name'
+                },
+                '__v': {
+                    '$first': '$__v'
+                },
+                'status': {
+                    '$first': '$status'
                 }
             }
-        },
-        {
-            '$match': {
-                'game_name': name
-            }
-        },
+        }
     ];
+
     const client = await MongoClient.connect(uri);
     const coll = client.db('MAIN').collection('tournaments');
 
