@@ -22,6 +22,7 @@ import {
     like_or_unlike,
     get_all_tournaments,
     get_user_details, get_specific_tournament,
+    return_games,
 } from "./database/connect.js"
 import mongoose from "mongoose";
 
@@ -54,7 +55,6 @@ const firebaseConfig = {
 const firebaseApp = initializeApp(firebaseConfig);
 const database = getFirestore();
 const auth = getAuth(firebaseApp)
-
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////      ENDPOINTS       //////////////////////////////////////////////////////////
@@ -294,6 +294,11 @@ app.post('/tournament/get/by-id', async (req, res) => {
     const {id} = req.body;
     console.log(id)
     const array = await get_specific_tournament(new mongoose.Types.ObjectId(id))
+    console.log(array);
+    res.status(200).json(array);
+})
+app.get('/game/get/all', async (req, res) => {
+    const array = await return_games();
     console.log(array);
     res.status(200).json(array);
 })

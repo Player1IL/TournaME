@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import User from "./models/user.js"
 import Tournament from "./models/tournament.js"
 import Comment from "./models/comment.js"
+import Game from "./models/game.js"
 import {MongoClient} from "mongodb";
 
 const uri = "mongodb+srv://site_admin:u51M8fdy6SC59JsN@cluster0.ylk6bpw.mongodb.net/MAIN?retryWrites=true&w=majority&appName=Cluster0";
@@ -726,4 +727,12 @@ export async function user_cleanup_missing_comments() {
 
     await client.close();
     return result
+}
+export async function return_games() {
+    try {
+        return await Game.find({});
+    } catch (error) {
+        console.error('Error updating user:', error);
+        return false;
+    }
 }
