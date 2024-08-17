@@ -62,7 +62,7 @@ export async function edit_user(user_id, updated_fields) {
         return false;
     }
 }
-export async function create_new_tournament(game, tournament_name, tournament_description, owner) {
+export async function create_new_tournament(game, tournament_name, tournament_description, owner, tournament_size) {
     const newTournament = new Tournament({
         game,
         tournament_name,
@@ -70,7 +70,8 @@ export async function create_new_tournament(game, tournament_name, tournament_de
         status: "OPEN",
         owner,
         comments: [],
-        participants: []
+        participants: [],
+        tournament_size,
     });
     let savedTournament;
     try {

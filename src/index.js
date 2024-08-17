@@ -270,12 +270,13 @@ app.post('/comment/like', async (req, res) => {
     }
 })
 app.post('/tournament/new', async (req, res) => {
-    const {game, tournament_name, tournament_description, owner} = req.body;
+    const {game, tournament_name, tournament_description, owner, tournament_size} = req.body;
     console.log(game, tournament_name, tournament_description, owner);
     const result = await create_new_tournament(
         new mongoose.Types.ObjectId(game),
         tournament_name,
         tournament_description,
+        tournament_size,
         new mongoose.Types.ObjectId(owner)
     );
     if (result) {
