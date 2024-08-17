@@ -276,8 +276,8 @@ app.post('/tournament/new', async (req, res) => {
         new mongoose.Types.ObjectId(game),
         tournament_name,
         tournament_description,
+        new mongoose.Types.ObjectId(owner),
         tournament_size,
-        new mongoose.Types.ObjectId(owner)
     );
     if (result) {
         res.status(200).json({status: "Tournament created!"});
