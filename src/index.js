@@ -23,7 +23,7 @@ import {
     like_or_unlike,
     get_all_tournaments,
     get_user_details, get_specific_tournament,
-    return_games, delete_user,
+    return_games, delete_user, join_tournament, leave_tournament,
 } from "./database/connect.js"
 import mongoose from "mongoose";
 
@@ -302,6 +302,32 @@ app.post('/tournament/edit', async (req, res) => {
         res.status(200).json({status: "Changes made!"});
     } else {
         res.status(400).json({status: "Failed to change!"});
+    }
+})
+app.post('/tournament/join', async (req, res) => {
+    const {user, tournament} = req.body;
+    console.log(tournament, user);
+    const result = await join_tournament(
+        new mongoose.Types.ObjectId(tournament),
+        new mongoose.Types.ObjectId(user),
+    );
+    if (result) {
+        res.status(200).json({status: "Joined tournament"});
+    } else {
+        res.status(400).json({status: "Failed to join!"});
+    }
+})
+app.post('/tournament/leave', async (req, res) => {
+    const {user, tournament} = req.body;
+    console.log(tournament, user);
+    const result = await leave_tournament(
+        new mongoose.Types.ObjectId(tournament),
+        new mongoose.Types.ObjectId(user),
+    );
+    if (result) {
+        res.status(200).json({status: "Left tournament"});
+    } else {
+        res.status(400).json({status: "Failed to leave!"});
     }
 })
 app.post('/tournament/delete', async (req, res) => {

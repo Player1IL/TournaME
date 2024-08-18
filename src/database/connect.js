@@ -707,3 +707,27 @@ export async function clean_up(id) {
 
     }
 }
+export async function join_tournament(tournament, user) {
+    try {
+        const updated_tournament = await Tournament.findByIdAndUpdate(
+            tournament,
+            { $push: { participants: user } },
+            { new: true, runValidators: true }
+        )
+        return true;
+    } catch (error) {
+        return false;
+    }
+}
+export async function leave_tournament(tournament, user) {
+    try {
+        const updated_tournament = await Tournament.findByIdAndUpdate(
+            tournament,
+            { $pull: { participants: user } },
+            { new: true, runValidators: true }
+        )
+        return true;
+    } catch (error) {
+        return false;
+    }
+}
